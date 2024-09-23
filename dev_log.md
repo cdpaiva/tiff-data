@@ -19,7 +19,6 @@ Bytes 0-1: Byte order
 "II" (Intel): little-endian
 "MM" (Motorola): big endian
 
-
 * Obs: I'm not really sure about how to handle opened files. 
 At the moment, I am saving the fptr previous position, with `ftell`, then I move the pointer to access the bytes I want and before returning from the function I fseek() it back to the point it was before.
 The only idea behind this is to maintain the previous position in case some other function eventally relies on that.
@@ -41,7 +40,7 @@ get_endianness
 valid_magic_number
 get_offset
 
-My computer uses little-endian byte order, so at the moment I will write everything considering LE by default.
+**My computer uses little-endian byte order, so at the moment I will write everything considering LE by default.**
 Images in BE will be flipped to LE, to then be processed.
 The conversion between BE and LE is pretty neat: for 16 bit values we flip the two bytes, and for 32 bits we mirror the values, by combining the bit shifts with corresponding & operations.
 
