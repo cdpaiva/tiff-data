@@ -40,10 +40,9 @@ test: $(TEST_EXEC)
 
 # Workaround until I setup the tests properly
 FILTERED_SRCS = $(filter-out src/main.c, $(SRCS))
-$(info $(BUILD_DIR))
 $(TEST_EXEC): $(TEST_OBJS)
 	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(TEST_OBJS) -o $(TEST_EXEC)
+	$(CC) $(CFLAGS) $(TEST_OBJS) $(FILTERED_SRCS) $(UNITY_SRC) -o $(TEST_EXEC)
 
 $(OBJ_DIR)/%.o: $(TEST_DIR)/%.c $(UNITY)
 	@mkdir -p $(OBJ_DIR)
