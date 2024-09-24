@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include "tiff_data.h"
 #include "utils.h"
@@ -6,7 +7,7 @@ FILE* open_file(char* path)
 {
     FILE* fptr = fopen(path, "r");
     if (fptr == NULL) {
-        perror("Error opening the file");
+        perror("Error opening the file\n");
         exit(EXIT_FAILURE);
     }
     return fptr;
@@ -24,7 +25,7 @@ enum Endianess get_endianess(FILE* fptr)
 
     int seek_res = fseek(fptr, ENDIANESS_OFFSET, SEEK_SET);
     if (seek_res != 0) {
-        perror("Failed to read image header");
+        perror("Failed to read image header\n");
         exit(1);
     }
 
@@ -36,9 +37,9 @@ enum Endianess get_endianess(FILE* fptr)
 
     if (bytes_read != should_read) {
         if (feof(fptr)) {
-            printf("Reached end of file, could not parse endianess");
+            printf("Reached end of file, could not parse endianess\n");
         } else {
-            perror("Error reading file endianess.");
+            perror("Error reading file endianess.\n");
         }
         exit(1);
     }
@@ -59,7 +60,7 @@ int is_valid_magic_number(FILE* fptr, enum Endianess endianess)
 
     int seek_res = fseek(fptr, MAGIC_NUMBER_OFFSET, SEEK_SET);
     if (seek_res != 0) {
-        perror("Failed to read image header");
+        perror("Failed to read image header\n");
         exit(1);
     }
 
@@ -71,9 +72,9 @@ int is_valid_magic_number(FILE* fptr, enum Endianess endianess)
 
     if (bytes_read != should_read) {
         if (feof(fptr)) {
-            printf("Reached end of file, could not parse endianess");
+            printf("Reached end of file, could not parse endianess\n");
         } else {
-            perror("Error reading file endianess.");
+            perror("Error reading file endianess.\n");
         }
         exit(1);
     }
@@ -88,11 +89,11 @@ int is_valid_magic_number(FILE* fptr, enum Endianess endianess)
 int get_IFD_offset(FILE* fptr, enum Endianess endianess)
 {
     long int curr_pos = ftell(fptr);
-    int IFD_OFFSET_OFFSET = 2;
+    int IFD_OFFSET_OFFSET = 4;
 
     int seek_res = fseek(fptr, IFD_OFFSET_OFFSET, SEEK_SET);
     if (seek_res != 0) {
-        perror("Failed to read image header");
+        perror("Failed to read image header\n");
         exit(1);
     }
 
@@ -104,9 +105,9 @@ int get_IFD_offset(FILE* fptr, enum Endianess endianess)
 
     if (bytes_read != should_read) {
         if (feof(fptr)) {
-            printf("Reached end of file, could not parse IFD offset");
+            printf("Reached end of file, could not parse IFD offset\n");
         } else {
-            perror("Error reading file endianess.");
+            perror("Error reading file endianess.\n");
         }
         exit(1);
     }
@@ -118,6 +119,42 @@ int get_IFD_offset(FILE* fptr, enum Endianess endianess)
     return IFD_offset;
 }
 
+int get_number_IFDs(FILE *fptr, enum Endianess endianess)
+{
+    long int curr_pos = ftell(fptr);
+    int IFD_offset = get_IFD_offset(fptr, endianess);
+    printf("IFD offset is %d bytes\n", IFD_offset);
+    printf("%02hhX\n", IFD_offset);
+
+    int seek_res = fseek(fptr, IFD_offset, SEEK_SET);
+    if (seek_res != 0) {
+        perror("Failed to read image header\n");
+        exit(1);
+    }
+
+    size_t should_read = 1;
+    uint16_t IFD_number;
+    size_t bytes_read = fread(&IFD_number, sizeof(uint16_t), should_read, fptr);
+
+    if (bytes_read != should_read) {
+        if (feof(fptr)) {
+            printf("Read %ld bytes\n", bytes_read);
+            printf("Reached end of file, could not parse number of IFDs\n"); 
+        } else {
+            perror("Failed to read number of IFDs\n");
+            exit(1);
+        }
+    }
+
+    fseek(fptr, curr_pos, SEEK_SET);
+
+    if (endianess == BE) {
+        IFD_number = flip_endianess16(IFD_number);
+    }
+
+    return IFD_number;
+}
+
 void print_raw_header(FILE* fptr)
 {
     long int curr_pos = ftell(fptr);
@@ -126,7 +163,7 @@ void print_raw_header(FILE* fptr)
 
     int seek_res = fseek(fptr, HEADER_OFFSET, SEEK_SET);
     if (seek_res != 0) {
-        perror("Failed to read image header");
+        perror("Failed to read image header\n");
         exit(1);
     }
 
@@ -136,9 +173,9 @@ void print_raw_header(FILE* fptr)
 
     if (bytes_read != should_read) {
         if (feof(fptr)) {
-            printf("Reached end of file, could not parse IFD offset");
+            printf("Reached end of file, could not parse IFD offset\n");
         } else {
-            perror("Error reading file endianess.");
+            perror("Error reading file endianess.\n");
         }
         exit(1);
     }

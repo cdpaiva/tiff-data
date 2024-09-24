@@ -59,5 +59,7 @@ Makefile for unity extracted from: https://www.throwtheswitch.org/build/make
 An IFD consists of a 2-byte count of the number of directory entries (number of fields).
 After the number of directories, each entry is represented as 12-bytes, followed by an offset of 4 bytes or zero (last IFD needs to have a 4-byte offset).
 
+[ ] Print the number of IFDs -> seems to be wrong!
+[ ] Print all IFDs as sequences of 12 bytes
 [ ] Print the number of entries in the first IFD
 [ ] Jump to the second IFD
