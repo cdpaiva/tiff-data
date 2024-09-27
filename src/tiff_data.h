@@ -11,6 +11,7 @@ enum Endianess {
 
 FILE* open_file(char *path);
 void close_file(FILE *fptr);
+void read_chunk(uint8_t *buffer, FILE *fptr, size_t n, int offset);
 
 void print_raw_header(FILE *fptr);
 enum Endianess get_endianess(FILE *fptr);

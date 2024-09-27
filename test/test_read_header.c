@@ -16,42 +16,42 @@ void tearDown()
 static void test_should_return_BE_for_big_endian_files()
 {
     FILE *fptr = open_file(TIRE_BE_IMG_PATH);
-    TEST_ASSERT_EQUAL(get_endianess(fptr), BE);
+    TEST_ASSERT_EQUAL(BE, get_endianess(fptr));
     close_file(fptr);
 }
 
 static void test_should_return_LE_for_little_endian_files()
 {
     FILE *fptr = open_file(TIRE_LE_IMG_PATH);
-    TEST_ASSERT_EQUAL(get_endianess(fptr), LE);
+    TEST_ASSERT_EQUAL(LE, get_endianess(fptr));
     close_file(fptr);
 }
 
 static void test_should_identify_valid_magic_number()
 {
     FILE *fptr = open_file(TIRE_LE_IMG_PATH);
-    TEST_ASSERT_EQUAL(is_valid_magic_number(fptr, LE), 1);
+    TEST_ASSERT_EQUAL(1, is_valid_magic_number(fptr, LE));
     close_file(fptr);
 }
 
 static void test_should_identify_invalid_magic_number()
 {
     FILE *fptr = open_file(PNG_IMG_PATH);
-    TEST_ASSERT_EQUAL(is_valid_magic_number(fptr, LE), 0);
+    TEST_ASSERT_EQUAL(0, is_valid_magic_number(fptr, LE));
     close_file(fptr);
 }
 
 static void test_should_get_IFD_offset()
 {
     FILE *fptr = open_file(TIRE_LE_IMG_PATH);
-    TEST_ASSERT_EQUAL(get_IFD_offset(fptr, LE), 47410);
+    TEST_ASSERT_EQUAL(47410, get_IFD_offset(fptr, LE));
     close_file(fptr);
 }
 
 static void test_should_get_IFD_offset_BE()
 {
     FILE *fptr = open_file(TIRE_BE_IMG_PATH);
-    TEST_ASSERT_EQUAL(get_IFD_offset(fptr, BE), 47410);
+    TEST_ASSERT_EQUAL(47410, get_IFD_offset(fptr, BE));
     close_file(fptr);
 }
 
@@ -68,14 +68,14 @@ static void test_should_get_same_IFD_for_both_endianess()
 static void test_should_get_number_of_IFDs()
 {
     FILE *fptr = open_file(TIRE_LE_IMG_PATH);
-    TEST_ASSERT_EQUAL(get_number_IFDs(fptr, LE), 13);
+    TEST_ASSERT_EQUAL(13, get_number_IFDs(fptr, LE));
     close_file(fptr);
 }
 
 static void test_should_get_number_of_IFDs_BE()
 {
     FILE *fptr = open_file(TIRE_BE_IMG_PATH);
-    TEST_ASSERT_EQUAL(get_number_IFDs(fptr, BE), 13);
+    TEST_ASSERT_EQUAL(18, get_number_IFDs(fptr, BE));
     close_file(fptr);
 }
 

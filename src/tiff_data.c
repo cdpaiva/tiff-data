@@ -18,24 +18,21 @@ void close_file(FILE *fptr)
     fclose(fptr);
 }
 
-enum Endianess get_endianess(FILE* fptr)
+void read_chunk(uint8_t *buffer, FILE *fptr, size_t n, int offset)
 {
     long int curr_pos = ftell(fptr);
-    int ENDIANESS_OFFSET = 0;
 
-    int seek_res = fseek(fptr, ENDIANESS_OFFSET, SEEK_SET);
+    int seek_res = fseek(fptr, offset, SEEK_SET);
     if (seek_res != 0) {
-        perror("Failed to read image header\n");
+        perror("Failed to read chunk.\n");
         exit(1);
     }
 
-    size_t should_read = 2;
-    uint8_t buffer[should_read];
-    size_t bytes_read = fread(buffer, sizeof(uint8_t), should_read, fptr);
+    size_t bytes_read = fread(buffer, sizeof(uint8_t), n, fptr);
 
     fseek(fptr, curr_pos, SEEK_SET);
 
-    if (bytes_read != should_read) {
+    if (bytes_read != n) {
         if (feof(fptr)) {
             printf("Reached end of file, could not parse endianess\n");
         } else {
@@ -43,6 +40,16 @@ enum Endianess get_endianess(FILE* fptr)
         }
         exit(1);
     }
+}
+
+enum Endianess get_endianess(FILE *fptr)
+{
+    int endianess_offset = 0;
+    size_t endianess_length = 2;
+    uint8_t buffer[endianess_length];
+
+    read_chunk(buffer, fptr, endianess_length, endianess_offset);
+
 
     if (buffer[0] == 'I' && buffer[1] == 'I') {
         return LE;
@@ -53,63 +60,35 @@ enum Endianess get_endianess(FILE* fptr)
     }
 }
 
-int is_valid_magic_number(FILE* fptr, enum Endianess endianess)
+int is_valid_magic_number(FILE *fptr, enum Endianess endianess)
 {
-    long int curr_pos = ftell(fptr);
-    int MAGIC_NUMBER_OFFSET = 2;
+    int magic_number_offset = 2;
+    size_t magic_number_length = 2;
 
-    int seek_res = fseek(fptr, MAGIC_NUMBER_OFFSET, SEEK_SET);
-    if (seek_res != 0) {
-        perror("Failed to read image header\n");
-        exit(1);
-    }
+    uint8_t buffer[magic_number_length];
 
-    size_t should_read = 1;
-    uint16_t magic_number;
-    size_t bytes_read = fread(&magic_number, sizeof(uint16_t), should_read, fptr);
-
-    fseek(fptr, curr_pos, SEEK_SET);
-
-    if (bytes_read != should_read) {
-        if (feof(fptr)) {
-            printf("Reached end of file, could not parse endianess\n");
-        } else {
-            perror("Error reading file endianess.\n");
-        }
-        exit(1);
-    }
+    read_chunk(buffer, fptr, magic_number_length, magic_number_offset);
 
     if (endianess == BE) {
-        magic_number = flip_endianess16(magic_number);
+        return buffer[1] == 42;
     }
 
-    return magic_number == 42;
+    return buffer[0] == 42;
 }
 
-int get_IFD_offset(FILE* fptr, enum Endianess endianess)
+int get_IFD_offset(FILE *fptr, enum Endianess endianess)
 {
-    long int curr_pos = ftell(fptr);
-    int IFD_OFFSET_OFFSET = 4;
+    int ifd_offset_offset = 4;
+    size_t ifd_offset_length = 4;
 
-    int seek_res = fseek(fptr, IFD_OFFSET_OFFSET, SEEK_SET);
-    if (seek_res != 0) {
-        perror("Failed to read image header\n");
-        exit(1);
-    }
+    uint8_t buffer[ifd_offset_length];
 
-    size_t should_read = 1;
-    u_int32_t IFD_offset;
-    size_t bytes_read = fread(&IFD_offset, sizeof(uint32_t), should_read, fptr);
+    read_chunk(buffer, fptr, ifd_offset_length, ifd_offset_offset);
 
-    fseek(fptr, curr_pos, SEEK_SET);
+    uint32_t IFD_offset = 0;
 
-    if (bytes_read != should_read) {
-        if (feof(fptr)) {
-            printf("Reached end of file, could not parse IFD offset\n");
-        } else {
-            perror("Error reading file endianess.\n");
-        }
-        exit(1);
+    for (size_t i = 0; i < ifd_offset_length; i++) {
+        IFD_offset += (uint32_t)(buffer[i]) << (i)*8;
     }
 
     if (endianess == BE) {
@@ -121,32 +100,17 @@ int get_IFD_offset(FILE* fptr, enum Endianess endianess)
 
 int get_number_IFDs(FILE *fptr, enum Endianess endianess)
 {
-    long int curr_pos = ftell(fptr);
     int IFD_offset = get_IFD_offset(fptr, endianess);
-    printf("IFD offset is %d bytes\n", IFD_offset);
-    printf("%02hhX\n", IFD_offset);
+    size_t IFD_number_length = 2;
 
-    int seek_res = fseek(fptr, IFD_offset, SEEK_SET);
-    if (seek_res != 0) {
-        perror("Failed to read image header\n");
-        exit(1);
+    uint8_t buffer[IFD_number_length];
+
+    read_chunk(buffer, fptr, IFD_number_length, IFD_offset);
+
+    uint16_t IFD_number = 0;
+    for (size_t i = 0; i < IFD_number_length; i++) {
+        IFD_number += (uint16_t)(buffer[i]) << (i)*8;
     }
-
-    size_t should_read = 1;
-    uint16_t IFD_number;
-    size_t bytes_read = fread(&IFD_number, sizeof(uint16_t), should_read, fptr);
-
-    if (bytes_read != should_read) {
-        if (feof(fptr)) {
-            printf("Read %ld bytes\n", bytes_read);
-            printf("Reached end of file, could not parse number of IFDs\n"); 
-        } else {
-            perror("Failed to read number of IFDs\n");
-            exit(1);
-        }
-    }
-
-    fseek(fptr, curr_pos, SEEK_SET);
 
     if (endianess == BE) {
         IFD_number = flip_endianess16(IFD_number);
@@ -155,36 +119,17 @@ int get_number_IFDs(FILE *fptr, enum Endianess endianess)
     return IFD_number;
 }
 
-void print_raw_header(FILE* fptr)
+void print_raw_header(FILE *fptr)
 {
-    long int curr_pos = ftell(fptr);
-    int HEADER_OFFSET = 0;
-    int HEADER_SIZE = 8;
+    int header_offset = 0;
+    int header_size = 8;
 
-    int seek_res = fseek(fptr, HEADER_OFFSET, SEEK_SET);
-    if (seek_res != 0) {
-        perror("Failed to read image header\n");
-        exit(1);
-    }
-
-    size_t should_read = 8;
-    uint8_t buffer[HEADER_SIZE];
-    size_t bytes_read = fread(buffer, sizeof(uint8_t), should_read, fptr);
-
-    if (bytes_read != should_read) {
-        if (feof(fptr)) {
-            printf("Reached end of file, could not parse IFD offset\n");
-        } else {
-            perror("Error reading file endianess.\n");
-        }
-        exit(1);
-    }
-
-    fseek(fptr, curr_pos, SEEK_SET);
+    uint8_t buffer[header_size];
+    read_chunk(buffer, fptr, header_size, header_offset);
 
     printf("========= IMAGE HEADER =========\n");
 
-    for(int i = 0; i < HEADER_SIZE; i++) {
+    for(int i = 0; i < header_size; i++) {
         printf("%3d ", buffer[i]);
     }
     printf("\n");
