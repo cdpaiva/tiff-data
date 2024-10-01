@@ -98,26 +98,58 @@ int get_IFD_offset(FILE *fptr, enum Endianess endianess)
     return IFD_offset;
 }
 
-int get_number_IFDs(FILE *fptr, enum Endianess endianess)
+void print_IFDs(FILE *fptr, enum Endianess endianess)
 {
     int IFD_offset = get_IFD_offset(fptr, endianess);
     size_t IFD_number_length = 2;
 
+    printf("IFD offset: %x.\n", IFD_offset);
     uint8_t buffer[IFD_number_length];
 
     read_chunk(buffer, fptr, IFD_number_length, IFD_offset);
 
-    uint16_t IFD_number = 0;
-    for (size_t i = 0; i < IFD_number_length; i++) {
-        IFD_number += (uint16_t)(buffer[i]) << (i)*8;
-    }
+    uint16_t IFD_number = to_uint16(buffer, IFD_number_length ,endianess);
 
-    if (endianess == BE) {
-        IFD_number = flip_endianess16(IFD_number);
-    }
+    printf("File has %hu IFDs.\n", IFD_number);
 
-    return IFD_number;
+    uint8_t IFD_buffer[IFD_number*12];
+
+    read_chunk(IFD_buffer, fptr, IFD_number*12, IFD_offset + IFD_number_length);
+
+    for (size_t i = 0; i < IFD_number*12; i += 12) {
+        uint16_t tag_number = to_uint16(IFD_buffer + i, 12, endianess);
+        int field_type_offset = i + 2;
+
+        uint16_t field_type = to_uint16(IFD_buffer + field_type_offset, 10, endianess);
+        char* type_name = get_type_name(field_type);
+        if (type_name[0] == '\0') {
+            perror("Type value must be between 1 and 12");
+            exit(1);
+        }
+        int count_offset = i + 4;
+
+        uint32_t count = to_uint32(IFD_buffer + count_offset, 8, endianess);
+        uint32_t value_offset = 0;
+
+        int num_bytes = get_type_byte_count(field_type);
+        if (num_bytes * count > 32) {
+            value_offset = 0;
+        }
+        int value_offset_offset = i + 8;
+        if (num_bytes == 1) {
+            value_offset = IFD_buffer[value_offset_offset];
+        } else if (num_bytes == 2) {
+            value_offset = to_uint16(IFD_buffer + value_offset_offset, 2, endianess);
+        } else if (num_bytes == 4) {
+            value_offset = to_uint32(IFD_buffer + value_offset_offset, 4, endianess);
+        } else {
+            value_offset = 0;
+        }
+
+        printf("%hu %s %d %d\n", tag_number, type_name, count, value_offset);
+    }
 }
+
 
 void print_raw_header(FILE *fptr)
 {

@@ -59,7 +59,13 @@ Makefile for unity extracted from: https://www.throwtheswitch.org/build/make
 An IFD consists of a 2-byte count of the number of directory entries (number of fields).
 After the number of directories, each entry is represented as 12-bytes, followed by an offset of 4 bytes or zero (last IFD needs to have a 4-byte offset).
 
-[ ] Print the number of IFDs -> seems to be wrong!
-[ ] Print all IFDs as sequences of 12 bytes
-[ ] Print the number of entries in the first IFD
-[ ] Jump to the second IFD
+[x] Print the number of IFDs -> seems to be wrong!
+
+It's not wrong.. during the conversion to BE images some extra tags were created, probably the tool I've used adds those tags to all images.
+
+[x] Print all IFDs as sequences of 12 bytes
+[x] Print the number of entries in the first IFD
+[x] Jump to the second IFD
+
+[x] Print the IFD tag names
+[ ] Print the IFD values that are outside the IFD range (offsets)

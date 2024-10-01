@@ -36,9 +36,7 @@ int main(int argc, char *argv[])
             printf("Invalid magic number\n");
         }
 
-        printf("IFD offset: %x\n", get_IFD_offset(fptr, endianess));
-
-        printf("Number of IFD Entries: %u\n", get_number_IFDs(fptr, endianess));
+        print_IFDs(fptr, endianess);
 
         close_file(fptr);
         return 0;
