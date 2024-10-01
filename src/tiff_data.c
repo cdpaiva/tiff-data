@@ -118,6 +118,7 @@ void print_IFDs(FILE *fptr, enum Endianess endianess)
 
     for (size_t i = 0; i < IFD_number*12; i += 12) {
         uint16_t tag_number = to_uint16(IFD_buffer + i, 12, endianess);
+        char* tag_name = get_tag_name(tag_number);
         int field_type_offset = i + 2;
 
         uint16_t field_type = to_uint16(IFD_buffer + field_type_offset, 10, endianess);
@@ -146,7 +147,7 @@ void print_IFDs(FILE *fptr, enum Endianess endianess)
             value_offset = 0;
         }
 
-        printf("%hu %s %d %d\n", tag_number, type_name, count, value_offset);
+        printf("%s %s %d %d\n", tag_name, type_name, count, value_offset);
     }
 }
 
