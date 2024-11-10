@@ -12,5 +12,4 @@ void print_raw_header(FILE *fptr);
 enum Endianess get_endianess(FILE *fptr);
 int is_valid_magic_number(FILE *fptr, enum Endianess endianess);
 int get_IFD_offset(FILE *fptr, enum Endianess endianess);
-int get_number_IFDs(FILE *fptr, enum Endianess endianess);
 void print_IFDs(FILE *fptr, enum Endianess endianess);

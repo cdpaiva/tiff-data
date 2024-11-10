@@ -65,23 +65,6 @@ static void test_should_get_same_IFD_for_both_endianess()
 }
 
 
-static void test_should_get_number_of_IFDs()
-{
-    FILE *fptr = open_file(TIRE_LE_IMG_PATH);
-    TEST_ASSERT_EQUAL(13, get_number_IFDs(fptr, LE));
-    close_file(fptr);
-}
-
-static void test_should_get_number_of_IFDs_BE()
-{
-    FILE *fptr = open_file(TIRE_BE_IMG_PATH);
-    TEST_ASSERT_EQUAL(18, get_number_IFDs(fptr, BE));
-    close_file(fptr);
-}
-
-
-
-
 int main()
 {
     UNITY_BEGIN();
@@ -93,8 +76,6 @@ int main()
     RUN_TEST(test_should_get_IFD_offset);
     RUN_TEST(test_should_get_IFD_offset_BE);
     RUN_TEST(test_should_get_same_IFD_for_both_endianess);
-    RUN_TEST(test_should_get_number_of_IFDs);
-    RUN_TEST(test_should_get_number_of_IFDs_BE);
 
     return UNITY_END();
 }

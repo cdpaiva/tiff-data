@@ -6,6 +6,7 @@
 
 The idea of this project is to create a CLI tool that will inspect a TIFF file and print its metadata.
 Even though I can do this by opening the image somewhere else (like ImageJ), it would be cool to have an easy to use tool that did this right away.
+This would also only read the bytes that are relevant to the metadata, in contrast with most tool, that actually read the entire file.
 It's also an excuse to write some C code in a project of my own.
 
 ### Goals
@@ -20,6 +21,7 @@ Bytes 0-1: Byte order
 "MM" (Motorola): big endian
 
 * Obs: I'm not really sure about how to handle opened files. 
+
 At the moment, I am saving the fptr previous position, with `ftell`, then I move the pointer to access the bytes I want and before returning from the function I fseek() it back to the point it was before.
 The only idea behind this is to maintain the previous position in case some other function eventally relies on that.
 
@@ -36,8 +38,6 @@ The offset is given in bytes from the beginning of the file.
 
 [x] Functions to interpret the tiff header: 
 
-get_endianness
-valid_magic_number
 get_offset
 
 **My computer uses little-endian byte order, so at the moment I will write everything considering LE by default.**
@@ -69,3 +69,10 @@ It's not wrong.. during the conversion to BE images some extra tags were created
 
 [x] Print the IFD tag names
 [ ] Print the IFD values that are outside the IFD range (offsets)
+
+After some refactoring, I realised that most of what the code was doing is:
+1. Read some amount of bytes, for example read 4 bytes after a 4 byte offset to get the IFD address
+2. Parse the bytes as a different numeric type, ie uint32 or uint16, taking in account the byte order (LE or BE)
+3. Use that value to something
+
+So I've extracted the read logic and the parsing into separate functions, the code is looking better now.

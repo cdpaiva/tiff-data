@@ -5,7 +5,6 @@ uint16_t flip_endianess16(uint16_t value)
     return (value >> 8) | (value << 8);
 }
 
-
 uint32_t flip_endianess32(uint32_t value)
 {
     return ((value >> 24) & 0x000000FF) |
@@ -29,8 +28,7 @@ uint16_t to_uint16(uint8_t *arr, size_t length, enum Endianess end)
     return -1;
 }
 
-
-uint32_t to_uint32(uint8_t *arr, size_t length, enum Endianess end) 
+uint32_t to_uint32(uint8_t *arr, size_t length, enum Endianess end)
 {
     if (length < 4) {
         perror("Not enough bytes to convert to uint32.");

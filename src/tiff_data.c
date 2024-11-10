@@ -34,9 +34,9 @@ void read_chunk(uint8_t *buffer, FILE *fptr, size_t n, int offset)
 
     if (bytes_read != n) {
         if (feof(fptr)) {
-            printf("Reached end of file, could not parse endianess\n");
+            printf("Reached end of file, could not read chunk.\n");
         } else {
-            perror("Error reading file endianess.\n");
+            perror("Error reading chunk.\n");
         }
         exit(1);
     }
@@ -46,10 +46,10 @@ enum Endianess get_endianess(FILE *fptr)
 {
     int endianess_offset = 0;
     size_t endianess_length = 2;
+
     uint8_t buffer[endianess_length];
 
     read_chunk(buffer, fptr, endianess_length, endianess_offset);
-
 
     if (buffer[0] == 'I' && buffer[1] == 'I') {
         return LE;
@@ -85,15 +85,7 @@ int get_IFD_offset(FILE *fptr, enum Endianess endianess)
 
     read_chunk(buffer, fptr, ifd_offset_length, ifd_offset_offset);
 
-    uint32_t IFD_offset = 0;
-
-    for (size_t i = 0; i < ifd_offset_length; i++) {
-        IFD_offset += (uint32_t)(buffer[i]) << (i)*8;
-    }
-
-    if (endianess == BE) {
-        IFD_offset = flip_endianess32(IFD_offset);
-    }
+    uint32_t IFD_offset = to_uint32(buffer, ifd_offset_length, endianess);
 
     return IFD_offset;
 }
