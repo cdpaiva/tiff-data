@@ -95,14 +95,11 @@ void print_IFDs(FILE *fptr, enum Endianess endianess)
     int IFD_offset = get_IFD_offset(fptr, endianess);
     size_t IFD_number_length = 2;
 
-    printf("IFD offset: %x.\n", IFD_offset);
     uint8_t buffer[IFD_number_length];
 
     read_chunk(buffer, fptr, IFD_number_length, IFD_offset);
 
     uint16_t IFD_number = to_uint16(buffer, IFD_number_length ,endianess);
-
-    printf("File has %hu IFDs.\n", IFD_number);
 
     uint8_t IFD_buffer[IFD_number*12];
 
@@ -111,38 +108,65 @@ void print_IFDs(FILE *fptr, enum Endianess endianess)
     for (size_t i = 0; i < IFD_number*12; i += 12) {
         uint16_t tag_number = to_uint16(IFD_buffer + i, 12, endianess);
         char* tag_name = get_tag_name(tag_number);
-        int field_type_offset = i + 2;
 
+        int field_type_offset = i + 2;
         uint16_t field_type = to_uint16(IFD_buffer + field_type_offset, 10, endianess);
         char* type_name = get_type_name(field_type);
         if (type_name[0] == '\0') {
             perror("Type value must be between 1 and 12");
             exit(1);
         }
+
         int count_offset = i + 4;
-
         uint32_t count = to_uint32(IFD_buffer + count_offset, 8, endianess);
+
         uint32_t value_offset = 0;
-
         int num_bytes = get_type_byte_count(field_type);
-        if (num_bytes * count > 32) {
-            value_offset = 0;
-        }
         int value_offset_offset = i + 8;
-        if (num_bytes == 1) {
-            value_offset = IFD_buffer[value_offset_offset];
-        } else if (num_bytes == 2) {
-            value_offset = to_uint16(IFD_buffer + value_offset_offset, 2, endianess);
-        } else if (num_bytes == 4) {
-            value_offset = to_uint32(IFD_buffer + value_offset_offset, 4, endianess);
-        } else {
-            value_offset = 0;
-        }
 
-        printf("%s %s %d %d\n", tag_name, type_name, count, value_offset);
+        // for more than 4 bytes, the field really is the value offset
+        if (num_bytes * count > 4) {
+            value_offset = to_uint32(IFD_buffer + value_offset_offset, 4, endianess);
+            // for ascii values:
+            if (field_type == 2) {
+                print_ascii_value(fptr, tag_name, tag_number, type_name, count, value_offset);
+            } else if (field_type == 5) {
+                print_rational_value(fptr, tag_name, tag_number, type_name, value_offset, endianess);
+            }
+        } else {
+            // for the other cases the value has no offset
+            // I'm using the same variable, but it's actually the value itself, not an offset
+            if (num_bytes == 1) {
+                value_offset = IFD_buffer[value_offset_offset];
+            } else if (num_bytes == 2) {
+                value_offset = to_uint16(IFD_buffer + value_offset_offset, 2, endianess);
+            } else if (num_bytes == 4) {
+                value_offset = to_uint32(IFD_buffer + value_offset_offset, 4, endianess);
+            } 
+        }
+        printf("%s (%d) %s %d %d\n", tag_name, tag_number, type_name, count, value_offset);
     }
 }
 
+void print_ascii_value(FILE *fptr, char *tag_name, int tag_number, char *type_name ,int count, int offset) {
+    uint8_t value[count];
+    read_chunk(value, fptr, count, offset);
+    char str_value[count + 1];
+    for (int i = 0; i < count; i++) {
+        str_value[i] = (char)value[i];
+    }
+    str_value[count+1] = '\0';
+    printf("%s (%d) %s %d %s\n", tag_name, tag_number, type_name, count, str_value);
+}
+
+void print_rational_value(FILE *fptr, char *tag_name, int tag_number, char *type_name, int offset, enum Endianess endianess) {
+    uint8_t value[8];
+    read_chunk(value, fptr, 8, offset);
+    uint32_t num = to_uint32(value, 4, endianess);
+    uint32_t den = to_uint32(value + 4, 4, endianess);
+    float ratio = (float)num / (float)den;
+    printf("%s (%d) %s %.2f\n", tag_name, tag_number, type_name, ratio);
+}
 
 void print_raw_header(FILE *fptr)
 {

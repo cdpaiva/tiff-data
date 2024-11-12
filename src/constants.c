@@ -106,7 +106,7 @@ char* get_type_name(int type)
     if (type < 1 || type > 11) {
         return "";
     }
-    char *type_names[11] = {"BYTE", "ASCII", "SHORT", "LONG", "RATIONAL", "SBYTE", "UNDEFINED", "SSHORT", "SRATIONAL", "FLOAT", "DOUBLE"};
+    char* type_names[11] = {"BYTE", "ASCII", "SHORT", "LONG", "RATIONAL", "SBYTE", "UNDEFINED", "SSHORT", "SRATIONAL", "FLOAT", "DOUBLE"};
 
     return type_names[type-1];
 }

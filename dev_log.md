@@ -69,6 +69,8 @@ It's not wrong.. during the conversion to BE images some extra tags were created
 
 [x] Print the IFD tag names
 [ ] Print the IFD values that are outside the IFD range (offsets)
+    [ ] Read ASCII values
+    [ ] Read rational values
 
 After some refactoring, I realised that most of what the code was doing is:
 1. Read some amount of bytes, for example read 4 bytes after a 4 byte offset to get the IFD address

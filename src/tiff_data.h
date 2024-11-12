@@ -13,3 +13,5 @@ enum Endianess get_endianess(FILE *fptr);
 int is_valid_magic_number(FILE *fptr, enum Endianess endianess);
 int get_IFD_offset(FILE *fptr, enum Endianess endianess);
 void print_IFDs(FILE *fptr, enum Endianess endianess);
+void print_ascii_value(FILE *fptr, char *tag_name, int tag_number, char *type_name ,int count, int offset);
+void print_rational_value(FILE *fptr, char *tag_name, int tag_number, char *type_name ,int offset, enum Endianess endianess);
