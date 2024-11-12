@@ -2,12 +2,8 @@
 
 ### Dev log
 
-* Day 1 (Aug 19)
-
 The idea of this project is to create a CLI tool that will inspect a TIFF file and print its metadata.
-Even though I can do this by opening the image somewhere else (like ImageJ), it would be cool to have an easy to use tool that did this right away.
-This would also only read the bytes that are relevant to the metadata, in contrast with most tool, that actually read the entire file.
-It's also an excuse to write some C code in a project of my own.
+It's mostly an excuse to write some C code in a project of my own, but it can be useful to quickly inspect TIFF files.
 
 ### Goals
 
@@ -22,8 +18,8 @@ Bytes 0-1: Byte order
 
 * Obs: I'm not really sure about how to handle opened files. 
 
-At the moment, I am saving the fptr previous position, with `ftell`, then I move the pointer to access the bytes I want and before returning from the function I fseek() it back to the point it was before.
-The only idea behind this is to maintain the previous position in case some other function eventally relies on that.
+At the moment, I am saving the fptr position with `ftell`, then I move the pointer to access the bytes I want. Before returning from the function I fseek() it back to the point it was before.
+The only reason for this is to maintain the previous position in case some other function eventually relies on that.
 
 Bytes 2-3: Magic number
 
@@ -46,35 +42,28 @@ The conversion between BE and LE is pretty neat: for 16 bit values we flip the t
 
 [x] Add unity for unit tests
 
--> Kind of works, but I use an exercism template, and that does not make sense because the only reason they compile the code is for testing.
-In my case, I had to do a few work arounds (exclude main.c in the Makefile when I compile the tests) to make this work.
-Surely there are much better solutions than this, I just need to learn how to do it.
-
-Makefile for unity extracted from: https://www.throwtheswitch.org/build/make
+Makefile for unity adapted from: https://www.throwtheswitch.org/build/make
 
 -> It was actually a mix of different makefiles, which did not make sense in the end.
 
-[ ] Start processing IFDs
+[x] Start processing IFDs
 
 An IFD consists of a 2-byte count of the number of directory entries (number of fields).
 After the number of directories, each entry is represented as 12-bytes, followed by an offset of 4 bytes or zero (last IFD needs to have a 4-byte offset).
 
-[x] Print the number of IFDs -> seems to be wrong!
+[x] Print the number of IFDs
 
-It's not wrong.. during the conversion to BE images some extra tags were created, probably the tool I've used adds those tags to all images.
-
-[x] Print all IFDs as sequences of 12 bytes
+[x] Print all IFD entries as sequences of 12 bytes
 [x] Print the number of entries in the first IFD
-[x] Jump to the second IFD
 
 [x] Print the IFD tag names
-[ ] Print the IFD values that are outside the IFD range (offsets)
-    [ ] Read ASCII values
-    [ ] Read rational values
+[x] Print the IFD values that are outside the IFD range (offsets)
+    [x] Read ASCII values
+    [x] Read rational values
 
-After some refactoring, I realised that most of what the code was doing is:
+After reading the code again, I realized that most of what the code was doing is:
 1. Read some amount of bytes, for example read 4 bytes after a 4 byte offset to get the IFD address
 2. Parse the bytes as a different numeric type, ie uint32 or uint16, taking in account the byte order (LE or BE)
 3. Use that value to something
 
-So I've extracted the read logic and the parsing into separate functions, the code is looking better now.
+Steps 1 and 2 were refactored to the function `read_chunks`.
